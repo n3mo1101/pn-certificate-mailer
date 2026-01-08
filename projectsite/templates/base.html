@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Certificate Mailer{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <h1 class="navbar-brand">
+                <img src="{% static 'img/college_logo.png' %}" class="college-logo" alt="College Logo">
+                Certificate Mailer
+            </h1>
+            <ul class="nav-links">
+                <li><a href="{% url 'send_certificates' %}" class="{% if request.resolver_match.url_name == 'send_certificates' %}active{% endif %}">Send Certificates</a></li>
+                <li><a href="{% url 'templates_list' %}" class="{% if 'template' in request.resolver_match.url_name %}active{% endif %}">Manage Templates</a></li>
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'admin:index' %}" target="_blank">Admin Panel</a></li>
+                    <li>
+                        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-btn">Logout</button>
+                        </form>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="container">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message|safe }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer>
+        <p>Powered by <strong>Project Nexus</strong> | Certificate Email Automation System</p>
+    </footer>
+</body>
+</html>

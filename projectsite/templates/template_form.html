@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Template{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>{{ action }} Email Template</h2>
+    </div>
+    
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">Template Name</label>
+                {{ form.name }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.subject.id_for_label }}">Email Subject</label>
+                {{ form.subject }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.header_message.id_for_label }}">Header Message</label>
+                {{ form.header_message }}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.body_content.id_for_label }}">Email Body Content</label>
+                {{ form.body_content }}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Template</button>
+                <a href="{% url 'templates_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

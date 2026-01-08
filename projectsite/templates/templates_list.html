@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Email Templates{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Email Templates</h2>
+        <a href="{% url 'template_create' %}" class="btn btn-primary">+ Create New Template</a>
+    </div>
+    
+    <div class="card-body">
+        {% if templates %}
+        <div class="templates-grid">
+            {% for template in templates %}
+            <div class="template-card">
+                <div class="template-header">
+                    <h3>{{ template.name }}</h3>
+                    {% if template.is_predefined %}
+                        <span class="badge badge-info">Predefined</span>
+                    {% else %}
+                        <span class="badge badge-custom">Custom</span>
+                    {% endif %}
+                </div>
+                <div class="template-body">
+                    <p><strong>Subject:</strong> {{ template.subject }}</p>
+                    <p><strong>Header:</strong> {{ template.header_message }}</p>
+                    <p class="template-preview">{{ template.body_content|truncatewords:30 }}</p>
+                </div>
+                <div class="template-actions">
+                    <a href="{% url 'template_preview' template.pk %}" class="btn btn-sm btn-secondary">Preview</a>
+                    {% if not template.is_predefined %}
+                        <a href="{% url 'template_edit' template.pk %}" class="btn btn-sm btn-secondary">Edit</a>
+                    {% endif %}
+                    <a href="{% url 'template_delete' template.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center" style="padding: 3rem;">
+            <p style="font-size: 1.2rem; color: var(--dark-gray);">No templates available yet.</p>
+            <p>Create your first template to get started!</p>
+            <a href="{% url 'template_create' %}" class="btn btn-primary" style="margin-top: 1rem;">+ Create New Template</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
