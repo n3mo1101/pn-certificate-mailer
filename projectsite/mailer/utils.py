@@ -77,7 +77,7 @@ def validate_certificate_filename(filename):
 
 def get_logo_path(logo_filename):
     # Get the absolute path to a logo file
-    logo_path = os.path.join(settings.BASE_DIR, 'mailer', 'static', 'img', logo_filename)
+    logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', logo_filename)
     return logo_path if os.path.exists(logo_path) else None
 
 

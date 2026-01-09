@@ -215,12 +215,14 @@ def preview_template(request, pk):
     # Preview an email template
     template = EmailTemplate.objects.get(id=pk)
     
+     # Render the email template with sample data
     email_html = render_to_string('email_template.html', {
         'header_message': template.header_message,
         'body_content': template.body_content,
         'for_preview': True,
     })
     
+    # Return the rendered HTML directly for preview
     return render(request, 'template_preview.html', {
         'template': template,
         'email_html': email_html,
