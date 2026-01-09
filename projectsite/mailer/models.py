@@ -2,8 +2,8 @@ from django.db import models
 from django.utils import timezone
 
 
+# Email templates for certificate distribution
 class EmailTemplate(models.Model):
-    """Email templates for certificate distribution"""
     name = models.CharField(max_length=200, unique=True)
     subject = models.CharField(max_length=300)
     header_message = models.CharField(max_length=200)
@@ -19,8 +19,8 @@ class EmailTemplate(models.Model):
         return self.name
 
 
+# Singleton model for email configuration
 class EmailConfiguration(models.Model):
-    """Singleton model for email configuration"""
     email_domain = models.CharField(
         max_length=100,
         default="psu.palawan.edu.ph",
@@ -32,6 +32,8 @@ class EmailConfiguration(models.Model):
         default="College of Sciences",
         help_text="Display name for sender"
     )
+
+    # Gmail SMTP settings (configured in Django admin settings.)
     smtp_host = models.CharField(
         max_length=200,
         default="smtp.gmail.com",
@@ -48,18 +50,19 @@ class EmailConfiguration(models.Model):
         return f"Email Config (Domain: {self.email_domain})"
 
     def save(self, *args, **kwargs):
+        # Ensure only one instance exists
         self.pk = 1
         super().save(*args, **kwargs)
 
     @classmethod
     def get_config(cls):
-        """Get or create the singleton configuration"""
+        # Get or create the singleton configuration
         config, _ = cls.objects.get_or_create(pk=1)
         return config
 
 
+# Log of all certificate emails sent
 class EmailLog(models.Model):
-    """Log of all certificate emails sent"""
     STATUS_CHOICES = [
         ('success', 'Success'),
         ('failed', 'Failed'),
@@ -88,8 +91,8 @@ class EmailLog(models.Model):
         return f"{self.student_id} - {self.status}"
 
 
+# Track batches of certificate sending operations
 class CertificateBatch(models.Model):
-    """Track batches of certificate sending operations"""
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('processing', 'Processing'),
@@ -114,7 +117,7 @@ class CertificateBatch(models.Model):
         return f"Batch {self.id} - {self.status} ({self.successful_sends}/{self.total_certificates})"
 
     def update_completion(self):
-        """Update batch completion status"""
+        # Update batch completion status
         self.completed_at = timezone.now()
         self.status = 'failed' if self.failed_sends > 0 and self.successful_sends == 0 else 'completed'
         self.save()

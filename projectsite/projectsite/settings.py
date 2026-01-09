@@ -159,7 +159,12 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'send_certificates'
 LOGOUT_REDIRECT_URL = 'login'
 
-# For testing mode: set your test email domain
-# Example: "gmail.com" will convert "john.doe.pdf" -> "john.doe@gmail.com"
+# ============================================================
+# TESTING MODE CONFIGURATION
+# ============================================================
+# Set CERTIFICATE_TESTING_MODE = True in settings.py to enable testing mode
+# In testing mode: filename (removed extension) becomes email address directly without name validation
+# Example: "john.doe.pdf" -> "john.doe@gmail.com"
+# ============================================================
 CERTIFICATE_TESTING_MODE = False
 CERTIFICATE_TEST_EMAIL_DOMAIN = "gmail.com"

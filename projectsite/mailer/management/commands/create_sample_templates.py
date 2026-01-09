@@ -3,7 +3,7 @@ from mailer.models import EmailTemplate
 
 
 class Command(BaseCommand):
-    help = 'Creates default email templates for the certificate mailer'
+    help = 'Creates sample email templates for the certificate mailer'
 
     def handle(self, *args, **kwargs):
         templates = [

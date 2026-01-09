@@ -10,9 +10,9 @@ class EmailTemplateAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
 
     def get_readonly_fields(self, request, obj=None):
-        """Make predefined templates read-only"""
+        # Make predefined templates read-only
         if obj and obj.is_predefined:
-            return self.readonly_fields + ('name', 'subject', 'header_message', 'body_content', 'is_predefined')
+            return self.readonly_fields + ['name', 'subject', 'header_message', 'body_content', 'is_predefined']
         return self.readonly_fields
 
 
@@ -22,9 +22,11 @@ class EmailConfigurationAdmin(admin.ModelAdmin):
     readonly_fields = ['updated_at']
 
     def has_add_permission(self, request):
+        # Only allow one configuration instance
         return not EmailConfiguration.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
+        # Don't allow deletion of configuration
         return False
 
 
@@ -37,6 +39,7 @@ class EmailLogAdmin(admin.ModelAdmin):
     date_hierarchy = 'sent_at'
 
     def has_add_permission(self, request):
+        # Don't allow manual creation of logs
         return False
 
 
@@ -49,4 +52,5 @@ class CertificateBatchAdmin(admin.ModelAdmin):
     date_hierarchy = 'started_at'
 
     def has_add_permission(self, request):
+        # Don't allow manual creation of batches
         return False

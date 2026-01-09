@@ -140,6 +140,10 @@ body {
     opacity: 0.9;
 }
 
+.card-header .btn {
+    margin-left: 1rem;
+}
+
 .card-body {
     padding: 2rem;
 }
@@ -396,6 +400,12 @@ footer {
 
 footer strong {
     color: var(--accent-green);
+}
+
+.nexus-logo {
+    width: auto;
+    height: 35px;
+    vertical-align: middle;
 }
 
 /* Utility Classes */

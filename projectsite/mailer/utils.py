@@ -5,9 +5,17 @@ from django.conf import settings
 from email.mime.image import MIMEImage
 from .models import EmailConfiguration, EmailLog
 
+# ============================================================
+# TESTING MODE CONFIGURATION
+# ============================================================
+# Set CERTIFICATE_TESTING_MODE = True in settings.py to enable testing mode
+# In testing mode: filename (without .pdf) becomes email address directly without name validation
+# Example: "john.doe.pdf" -> "john.doe@test_domain"
+# ============================================================
+
 
 def extract_student_id_from_filename(filename):
-    """Extract student ID from certificate filename (removes .pdf extension)"""
+    # Extract student ID and removes .pdf extension
     return filename.replace('.pdf', '').replace('.PDF', '')
 
 
@@ -15,14 +23,20 @@ def generate_email_from_student_id(student_id):
     """
     Generate email address from student ID.
     
-    DEFAULT MODE: ####-#-#### → ########@domain.edu.ph
-    TESTING MODE: student_id → student_id@test_domain
+    DEFAULT MODE (CERTIFICATE_TESTING_MODE = False):
+        Format: ####-#-#### → ########@domain.edu.ph
+        Example: "2000-1-0123" → "200010123@psu.palawan.edu.ph"
+    
+    TESTING MODE (CERTIFICATE_TESTING_MODE = True):
+        Format: student_id → student_id@test_domain
+        Example: "john.doe" → "john.doe@gmail.com"
     """
+
+    # Check if testing mode is enabled
     testing_mode = getattr(settings, 'CERTIFICATE_TESTING_MODE', False)
     
     if testing_mode:
         test_domain = getattr(settings, 'CERTIFICATE_TEST_EMAIL_DOMAIN', 'gmail.com')
-        # return f"{student_id}@{test_domain}"
         return f"{student_id}@{test_domain}"
     
     config = EmailConfiguration.get_config()
@@ -31,10 +45,9 @@ def generate_email_from_student_id(student_id):
 
 
 def validate_certificate_filename(filename):
-    """
-    Validate certificate filename based on mode.
-    Returns (is_valid, student_id, email)
-    """
+    # Validate certificate filename based on mode.
+
+    # Returns (is_valid, student_id, email)
     if not filename.lower().endswith('.pdf'):
         return False, None, None
     
@@ -45,29 +58,31 @@ def validate_certificate_filename(filename):
         email = generate_email_from_student_id(student_id)
         return True, student_id, email
     
-    # PRODUCTION MODE: Validate ####-#-#### format
+    # DEFAULT MODE: Validate ####-#-#### format
     parts = student_id.split('-')
     if len(parts) != 3:
         return False, None, None
     
+    # Check if all parts are numeric
     try:
         for part in parts:
             int(part)
     except ValueError:
         return False, None, None
     
+     # Generate email
     email = generate_email_from_student_id(student_id)
     return True, student_id, email
 
 
 def get_logo_path(logo_filename):
-    """Get the absolute path to a logo file"""
+    # Get the absolute path to a logo file
     logo_path = os.path.join(settings.BASE_DIR, 'mailer', 'static', 'img', logo_filename)
     return logo_path if os.path.exists(logo_path) else None
 
 
 def read_logo_data(logo_filename):
-    """Read logo binary data"""
+    # Read logo binary data
     logo_path = get_logo_path(logo_filename)
     if logo_path:
         with open(logo_path, 'rb') as f:
@@ -78,18 +93,27 @@ def read_logo_data(logo_filename):
 def send_certificate_email(certificate_file, template):
     """
     Send a certificate email to a student.
-    Returns (success, student_id, email, error_message)
+    
+    Args:
+        certificate_file: InMemoryUploadedFile or File object
+        template: EmailTemplate instance
+    
+    Returns:
+        tuple: (success: bool, student_id: str, email: str, error_message: str or None)
     """
     try:
+        # Validate filename and extract info
         is_valid, student_id, email = validate_certificate_filename(certificate_file.name)
         
         if not is_valid:
             error_msg = f"Invalid filename format: {certificate_file.name}"
             return False, certificate_file.name, None, error_msg
         
+        # Get email configuration
         config = EmailConfiguration.get_config()
         from_email = f"{config.from_name} <{config.from_email}>"
         
+         # Prepare email content
         email_message = EmailMultiAlternatives(
             subject=template.subject,
             body=f"{template.header_message}\n\n{template.body_content}",
@@ -97,6 +121,7 @@ def send_certificate_email(certificate_file, template):
             to=[email],
         )
         
+         # Create email with alternative content (HTML)
         email_html = render_to_string('email_template.html', {
             'header_message': template.header_message,
             'body_content': template.body_content,
@@ -119,8 +144,10 @@ def send_certificate_email(certificate_file, template):
                 logo_img.add_header('Content-Disposition', 'inline', filename=logo_name)
                 email_message.attach(logo_img)
         
+        # Send email
         email_message.send(fail_silently=False)
         
+        # Log success
         EmailLog.objects.create(
             student_id=student_id,
             email=email,
@@ -147,7 +174,17 @@ def send_certificate_email(certificate_file, template):
 
 
 def send_certificates_batch(certificate_files, template, batch_obj=None):
-    """Send multiple certificates in a batch"""
+    """
+    Send multiple certificates in a batch.
+    
+    Args:
+        certificate_files: List of file objects
+        template: EmailTemplate instance
+        batch_obj: Optional CertificateBatch instance to update
+    
+    Returns:
+        dict: Statistics about the sending process
+    """
     results = {
         'total': len(certificate_files),
         'successful': 0,
@@ -168,6 +205,7 @@ def send_certificates_batch(certificate_files, template, batch_obj=None):
                 'error': error
             })
         
+        # Update batch if provided
         if batch_obj:
             batch_obj.successful_sends = results['successful']
             batch_obj.failed_sends = results['failed']
