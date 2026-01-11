@@ -27,7 +27,7 @@
         <div class="form-actions">
             <a href="{% url 'templates_list' %}" class="btn btn-secondary">← Back to Templates</a>
             {% if not template.is_predefined %}
-                <a href="{% url 'template_edit' template.pk %}" class="btn btn-primary">✏️ Edit Template</a>
+                <a href="{% url 'template_edit' template.pk %}" class="btn btn-primary">Edit Template</a>
             {% endif %}
         </div>
     </div>
