@@ -2,7 +2,6 @@ import os
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
-from email.mime.image import MIMEImage
 from .models import EmailConfiguration, EmailLog
 
 # ============================================================
@@ -37,7 +36,8 @@ def generate_email_from_student_id(student_id):
     
     if testing_mode:
         test_domain = getattr(settings, 'CERTIFICATE_TEST_EMAIL_DOMAIN', 'gmail.com')
-        return f"{student_id}@{test_domain}"
+        test_name = getattr(settings, 'CERTIFICATE_TEST_EMAIL_NAME', 'testuser')
+        return f"{test_name}@{test_domain}"
     
     config = EmailConfiguration.get_config()
     email_prefix = student_id.replace('-', '')
@@ -54,40 +54,27 @@ def validate_certificate_filename(filename):
     student_id = extract_student_id_from_filename(filename)
     testing_mode = getattr(settings, 'CERTIFICATE_TESTING_MODE', False)
     
-    if testing_mode:
-        email = generate_email_from_student_id(student_id)
-        return True, student_id, email
+    # NOTE: Commented out validation code for filenames below.
+
+    # if testing_mode:
+    #     email = generate_email_from_student_id(student_id)
+    #     return True, student_id, email
     
     # DEFAULT MODE: Validate ####-#-#### format
-    parts = student_id.split('-')
-    if len(parts) != 3:
-        return False, None, None
+    # parts = student_id.split('-')
+    # if len(parts) != 3:
+    #     return False, None, None
     
     # Check if all parts are numeric
-    try:
-        for part in parts:
-            int(part)
-    except ValueError:
-        return False, None, None
+    # try:
+    #     for part in parts:
+    #         int(part)
+    # except ValueError:
+    #     return False, None, None
     
      # Generate email
     email = generate_email_from_student_id(student_id)
     return True, student_id, email
-
-
-def get_logo_path(logo_filename):
-    # Get the absolute path to a logo file
-    logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', logo_filename)
-    return logo_path if os.path.exists(logo_path) else None
-
-
-def read_logo_data(logo_filename):
-    # Read logo binary data
-    logo_path = get_logo_path(logo_filename)
-    if logo_path:
-        with open(logo_path, 'rb') as f:
-            return f.read()
-    return None
 
 
 def send_certificate_email(certificate_file, template):
@@ -125,24 +112,16 @@ def send_certificate_email(certificate_file, template):
         email_html = render_to_string('email_template.html', {
             'header_message': template.header_message,
             'body_content': template.body_content,
+            'for_preview': False,  # Use external links for logos
         })
         email_message.attach_alternative(email_html, 'text/html')
         
-        # Attach certificate
+        # Attach certificate PDF
         email_message.attach(
             certificate_file.name,
             certificate_file.read(),
             'application/pdf'
         )
-        
-        # Attach logos as inline images
-        for logo_name, cid in [('college_logo.png', 'college_logo'), ('nexus_logo.png', 'nexus_logo')]:
-            logo_data = read_logo_data(logo_name)
-            if logo_data:
-                logo_img = MIMEImage(logo_data)
-                logo_img.add_header('Content-ID', f'<{cid}>')
-                logo_img.add_header('Content-Disposition', 'inline', filename=logo_name)
-                email_message.attach(logo_img)
         
         # Send email
         email_message.send(fail_silently=False)

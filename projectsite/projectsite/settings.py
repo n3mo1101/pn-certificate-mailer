@@ -167,4 +167,5 @@ LOGOUT_REDIRECT_URL = 'login'
 # Example: "john.doe.pdf" -> "john.doe@gmail.com"
 # ============================================================
 CERTIFICATE_TESTING_MODE = False
+CERTIFICATE_TEST_EMAIL_NAME = "testuser"
 CERTIFICATE_TEST_EMAIL_DOMAIN = "gmail.com"
