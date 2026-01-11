@@ -1,5 +1,6 @@
 import os
-from django.core.mail import EmailMultiAlternatives
+import time
+from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
 from django.conf import settings
 from .models import EmailConfiguration, EmailLog
@@ -52,20 +53,19 @@ def validate_certificate_filename(filename):
         return False, None, None
     
     student_id = extract_student_id_from_filename(filename)
-    testing_mode = getattr(settings, 'CERTIFICATE_TESTING_MODE', False)
-    
     # NOTE: Commented out validation code for filenames below.
 
+    # testing_mode = getattr(settings, 'CERTIFICATE_TESTING_MODE', False)
     # if testing_mode:
     #     email = generate_email_from_student_id(student_id)
     #     return True, student_id, email
     
-    # DEFAULT MODE: Validate ####-#-#### format
+    # # DEFAULT MODE: Validate ####-#-#### format
     # parts = student_id.split('-')
     # if len(parts) != 3:
     #     return False, None, None
     
-    # Check if all parts are numeric
+    # # Check if all parts are numeric
     # try:
     #     for part in parts:
     #         int(part)
@@ -77,13 +77,14 @@ def validate_certificate_filename(filename):
     return True, student_id, email
 
 
-def send_certificate_email(certificate_file, template):
+def send_certificate_email(certificate_file, template, connection=None):
     """
     Send a certificate email to a student.
     
     Args:
         certificate_file: InMemoryUploadedFile or File object
         template: EmailTemplate instance
+        connection: Optional persistent SMTP connection (for batch sending)
     
     Returns:
         tuple: (success: bool, student_id: str, email: str, error_message: str or None)
@@ -106,17 +107,18 @@ def send_certificate_email(certificate_file, template):
             body=f"{template.header_message}\n\n{template.body_content}",
             from_email=from_email,
             to=[email],
+            connection=connection,  # Use persistent connection if provided
         )
         
          # Create email with alternative content (HTML)
         email_html = render_to_string('email_template.html', {
             'header_message': template.header_message,
             'body_content': template.body_content,
-            'for_preview': False,  # Use external links for logos
+            'for_preview': False,
         })
         email_message.attach_alternative(email_html, 'text/html')
         
-        # Attach certificate PDF
+        # Attach certificate
         email_message.attach(
             certificate_file.name,
             certificate_file.read(),
@@ -154,7 +156,7 @@ def send_certificate_email(certificate_file, template):
 
 def send_certificates_batch(certificate_files, template, batch_obj=None):
     """
-    Send multiple certificates in a batch.
+    Send multiple certificates in a batch using persistent SMTP connection.
     
     Args:
         certificate_files: List of file objects
@@ -171,23 +173,46 @@ def send_certificates_batch(certificate_files, template, batch_obj=None):
         'errors': []
     }
     
-    for cert_file in certificate_files:
-        success, student_id, email, error = send_certificate_email(cert_file, template)
+    # Create persistent SMTP connection for entire batch
+    connection = get_connection()
+    
+    try:
+        # Open the connection once
+        connection.open()
         
-        if success:
-            results['successful'] += 1
-        else:
-            results['failed'] += 1
-            results['errors'].append({
-                'student_id': student_id,
-                'email': email,
-                'error': error
-            })
+        for index, cert_file in enumerate(certificate_files, start=1):
+            # Send email using persistent connection
+            success, student_id, email, error = send_certificate_email(
+                cert_file, 
+                template, 
+                connection=connection  # Pass connection to reuse
+            )
+            
+            if success:
+                results['successful'] += 1
+            else:
+                results['failed'] += 1
+                results['errors'].append({
+                    'student_id': student_id,
+                    'email': email,
+                    'error': error
+                })
+            
+            # Update batch if provided
+            if batch_obj:
+                batch_obj.successful_sends = results['successful']
+                batch_obj.failed_sends = results['failed']
+                batch_obj.save()
+            
+            # COOLDOWN: Every 80 emails, pause for 100 seconds to avoid rate limiting
+            if index % 80 == 0 and index < len(certificate_files):
+                print(f"[INFO] Cooldown after {index} emails - waiting 100 seconds to avoid rate limits...")
+                connection.close()  # Close connection during cooldown
+                time.sleep(100)
+                connection.open()  # Reopen after cooldown
+                print(f"[INFO] Resuming after cooldown...")
         
-        # Update batch if provided
-        if batch_obj:
-            batch_obj.successful_sends = results['successful']
-            batch_obj.failed_sends = results['failed']
-            batch_obj.save()
+    finally:
+        connection.close()
     
     return results
