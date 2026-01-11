@@ -16,24 +16,27 @@ A Django web application for distributing certificates and email messages to stu
 
 ## How It Works
 
-### Filename to Email Validation
+### Filename to Email Validation (UPDATED)
 
 The application uses two modes for validating certificate filenames and generating email addresses:
 
-#### Default Mode (Production)
-- **Filename Format**: `####-#-####.pdf` (e.g., `2000-1-0123.pdf`)
+#### Default Mode
+- **Filename Format**: `####-#-####.pdf` (e.g., `2000-1-0123.pdf`) direct student id (e.g., `200010123.pdf`)
 - **Email Format**: Student ID without hyphens + domain (e.g., `200010123@psu.palawan.edu.ph`)
 - **Validation**: Strict format checking - all three parts must be numeric and separated by hyphens
 
 #### Testing Mode
-- **Filename Format**: Any PDF filename (e.g., `john.doe.pdf`)
-- **Email Format**: Filename (without extension) + test domain (e.g., `john.doe@gmail.com`)
+- **Filename Format**: The same with default mode.
+- **Email Format**: test username (see in settings.py) + test domain (e.g., `john.doe@gmail.com`)
 - **Validation**: Minimal - only checks if file is a PDF
-- **Use Case**: Development, testing, or sending to non-standard email addresses
+- **Use Case**: Development, testing, or sending to specified email addresses
+
+Note: Filename validation now only check for .pdf extension as requirement for both modes. 
 
 To enable testing mode, set in `projectsite/settings.py`:
 ```python
 CERTIFICATE_TESTING_MODE = True
+CERTIFICATE_TEST_EMAIL_NAME = "testuser" # change to receivers name
 CERTIFICATE_TEST_EMAIL_DOMAIN = "gmail.com"  # or any domain
 ```
 
@@ -202,21 +205,12 @@ Log in and configure email settings through the Django Admin Panel:
 
 ### Default Mode
 ```
-Format: ####-#-####.pdf
+Format: ####-#-####.pdf OR #########
 Examples:
   ✓ 2000-1-0123.pdf → 200010123@psu.palawan.edu.ph
   ✓ 2021-2-0456.pdf → 202120456@psu.palawan.edu.ph
-  ✗ 2000-0123.pdf (invalid - wrong format)
-  ✗ john-doe.pdf (invalid - not numeric)
-```
-
-### Testing Mode
-```
-Format: <anything>.pdf
-Examples:
-  ✓ john.doe.pdf → john.doe@gmail.com
-  ✓ test.user.pdf → test.user@gmail.com
-  ✓ alice-smith.pdf → alice-smith@gmail.com
+  ✓ 200010123.pdf  → 202120456@psu.palawan.edu.ph
+  ✗ john-doe.pdf (invalid corporate email)
 ```
 
 ## Troubleshooting
@@ -226,11 +220,6 @@ Examples:
 - Check Email Configuration in admin panel
 - Ensure 2-Step Verification is enabled on Google Account
 - Check email logs for specific error messages
-
-### Invalid Filename Errors
-- Ensure filenames match the required format: `####-#-####.pdf`
-- Check that all parts are numeric (no letters)
-- Or enable Testing Mode for flexible naming
 
 ### File Upload Issues
 - Maximum file size: 10MB per file
