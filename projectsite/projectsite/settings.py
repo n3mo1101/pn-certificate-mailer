@@ -30,7 +30,7 @@ SECRET_KEY = "django-insecure-n16*e!ou-m9chb9*f$p_7!0=+jkr@_)7!atvru5f=t9*gs0ob^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['csmail.pythonanywhere.com', '127.0.0.1']
 
 
 # Application definition
