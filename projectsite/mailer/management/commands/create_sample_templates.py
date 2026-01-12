@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
 It is important that you keep this document as part of your record, as this is an official school document.
 
-<h3 style="color: initial; letter-spacing: 1px;">Welcome to the College of Sciences!</h3>''',
+<h3 style="letter-spacing: 1px;">Welcome to the College of Sciences!</h3>''',
                 'is_predefined': True
             },
             {
@@ -46,7 +46,7 @@ This certificate is a testament to your commitment to excellence. We are proud o
 
 Congratulations once again on this well-deserved recognition!
 
-<h4>From the College of Sciences!</h4>''',
+<h3>From the College of Sciences!</h3>''',
                 'is_predefined': True
             },
         ]
