@@ -19,7 +19,9 @@
                 <li><a href="{% url 'send_certificates' %}" class="{% if request.resolver_match.url_name == 'send_certificates' %}active{% endif %}">Send Certificates</a></li>
                 <li><a href="{% url 'templates_list' %}" class="{% if 'template' in request.resolver_match.url_name %}active{% endif %}">Manage Templates</a></li>
                 {% if user.is_authenticated %}
-                    <li><a href="{% url 'admin:index' %}" target="_blank">Admin Panel</a></li>
+                    {% if user.is_staff %}
+                        <li><a href="{% url 'admin:index' %}" target="_blank">Admin Panel</a></li>
+                    {% endif %}
                     <li>
                         <form method="post" action="{% url 'logout' %}" style="display: inline;">
                             {% csrf_token %}
