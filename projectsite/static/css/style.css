@@ -1,8 +1,9 @@
 :root {
-    --primary-green: #3b6e19;
-    --light-green: #4a7c2c;
-    --lighter-green: #6b9e4f;
-    --accent-green: #8bc34a;
+    --primary-green:  #083266;  /* Slightly darker deep blue */
+    --light-green:    #0C4585;  /* Darker royal blue */
+    --lighter-green:  #135A9A;  /* Muted mid blue */
+    --accent-green:   #1A76BF;  /* Controlled bright blue */    
+    
     --white: #ffffff;
     --light-gray: #f5f5f5;
     --gray: #e0e0e0;
@@ -49,6 +50,7 @@ body {
 .navbar-brand {
     font-size: 1.5rem;
     font-weight: bold;
+    vertical-align: middle;
 }
 
 .nav-links {
@@ -72,10 +74,10 @@ body {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-.college-logo {
-    width: 70px;
+.logo {
+    width: 80px;
     height: auto;
-    vertical-align: middle;
+    margin-right: 0.3rem;
 }
 
 .logout-btn {
@@ -146,6 +148,9 @@ body {
 
 .card-body {
     padding: 2rem;
+}
+.email-form {
+    min-width: 50rem;
 }
 
 /* Forms */

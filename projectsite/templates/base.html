@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Certificate Mailer{% endblock %}</title>
     {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
             <h1 class="navbar-brand">
-                <img src="{% static 'img/college_logo.png' %}" class="college-logo" alt="College Logo">
-                Certificate Mailer
+                <img src="{% static 'img/nexus_text_logo.png' %}" class="logo" alt="Nexus Logo">
+                Certificate Mail
             </h1>
             <ul class="nav-links">
                 <li><a href="{% url 'send_certificates' %}" class="{% if request.resolver_match.url_name == 'send_certificates' %}active{% endif %}">Send Certificates</a></li>

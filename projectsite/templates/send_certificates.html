@@ -12,7 +12,7 @@
         {% if testing_mode %}
         <div class="alert alert-warning">
             <strong>⚠ TESTING MODE ENABLED</strong><br>
-            Filenames will be used directly as email addresses (e.g., john.doe.pdf → john.doe@gmail.com)<br>
+            Files will be sent directly to specified test email address regardless of filename.<br>
             To disable, set <code>CERTIFICATE_TESTING_MODE = False</code> in settings.py
         </div>
         {% endif %}
@@ -32,17 +32,11 @@
                 <label for="id_certificates">Upload Certificate Files *</label>
                 <input type="file" name="certificates" multiple accept=".pdf" class="form-control" id="id_certificates" required>
                 <small class="form-text">Select one or more PDF certificates</small>
-                {% if not testing_mode %}
-                <small class="form-text">
-                    <strong>File naming format:</strong> ####-#-####.pdf (e.g., 2000-1-0123.pdf)<br>
-                    <strong>Email format:</strong> Student ID without hyphens + @domain (e.g., 200010123@university.edu.ph)
+                <small class="form-text alert alert-info">
+                    <strong>Filename format:</strong> 2000-1-0001.pdf or 200010001.pdf<br>
+                    <strong>File size:</strong> Maximum of 10MB per file<br>
+                    <small>Note: For large batches (50+ certificates), the process may take several minutes</small>
                 </small>
-                {% else %}
-                <small class="form-text">
-                    <strong>Testing Mode:</strong> Any PDF filename is accepted<br>
-                    <strong>Email format:</strong> Filename (without .pdf) + @gmail.com
-                </small>
-                {% endif %}
             </div>
             
             <div class="form-actions">
