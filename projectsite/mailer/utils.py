@@ -110,10 +110,14 @@ def send_certificate_email(certificate_file, template, connection=None):
             connection=connection,  # Use persistent connection if provided
         )
         
+        # Get college information for the template
+        college_info = settings.COLLEGES.get(template.college, {})
+
          # Create email with alternative content (HTML)
         email_html = render_to_string('email_template.html', {
             'header_message': template.header_message,
             'body_content': template.body_content,
+            'college_info': college_info,
             'for_preview': False,
         })
         email_message.attach_alternative(email_html, 'text/html')

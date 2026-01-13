@@ -46,7 +46,7 @@
             margin: 20px 0;
         }
         .content h3 {
-            margin-top: 50px;
+            margin-top: 30px;
         }
         .contact-info {
             text-align: center;
@@ -92,7 +92,7 @@
         <div class="contact-info">
             Contact us:<br>
             <a href="mailto:{{ college_info.email }}">{{ college_info.email }}</a><br>
-            <a href="{{ college_info.social }}" target="_blank">{{ college_info.name|default:"College of Sciences" }}</a>
+            <a href="{{ college_info.social }}" target="_blank">{{ college_info.name }}</a>
         </div>
         
         <div class="footer">

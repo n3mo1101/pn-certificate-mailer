@@ -22,7 +22,7 @@ It is important that you keep this document as part of your record, as this is a
             {
                 'name': 'Report of Grades',
                 'subject': 'Report of Grades',
-                'header_message': 'Hello, Student!',
+                'header_message': 'Greetings!',
                 'body_content_template': '''Kindly see the attached file for the copy of your report of grades for the semester: FIRST Sem. 2025-2026
 
 For questions or concerns, please send an e-mail to {college_email}, with "Report of Grades" as the subject line.

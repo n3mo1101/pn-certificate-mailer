@@ -174,19 +174,19 @@ CERTIFICATE_TEST_EMAIL_DOMAIN = "gmail.com"
 COLLEGES = {
     'CS': {
         'name': 'College of Sciences',
-        'logo': 'https://github.com/n3mo1101/misc-assets/blob/main/logo/college_logo.png?raw=true',
+        'logo': 'https://github.com/n3mo1101/pn-certificate-mailer/blob/main/projectsite/static/img/cs_logo.png?raw=true',
         'email': 'cs@psu.palawan.edu.ph',
         'social': 'https://www.facebook.com/CollegeOfSciencesPSU/'
     },
     'CBA': {
         'name': 'College of Business and Accountancy',
-        'logo': 'https://github.com/n3mo1101/misc-assets/blob/main/logo/cba_logo.png?raw=true',
+        'logo': 'https://github.com/n3mo1101/pn-certificate-mailer/blob/main/projectsite/static/img/cba_logo.png?raw=true',
         'email': 'cba@psu.palawan.edu.ph',
         'social': 'https://www.facebook.com/cba.tycoons'
     },
     'CAH': {
         'name': 'College of Arts and Humanities',
-        'logo': 'https://github.com/n3mo1101/misc-assets/blob/main/logo/cah_logo.png?raw=true',
+        'logo': 'https://github.com/n3mo1101/pn-certificate-mailer/blob/main/projectsite/static/img/cah_logo.png?raw=true',
         'email': 'cah@psu.palawan.edu.ph',
         'social': 'https://www.facebook.com/CAHpamilya'
     }
