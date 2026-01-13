@@ -78,12 +78,7 @@
 <body>
     <div class="email-container">
         <div class="logo-section">
-            {% if for_preview %}
-                {% load static %}
-                <img src="{% static 'img/college_logo.png' %}" alt="College Logo">
-            {% else %}
-                <img src="https://github.com/n3mo1101/misc-assets/blob/main/logo/college_logo.png?raw=true" alt="College Logo">
-            {% endif %}
+            <img src="{{ college_info.logo }}" alt="{{ college_info.name }} Logo">
         </div>
         
         <div class="header-message">
@@ -96,9 +91,8 @@
         
         <div class="contact-info">
             Contact us:<br>
-            <a href="mailto:cs@psu.palawan.edu.ph">cs@psu.palawan.edu.ph</a><br>
-            0928917620<br>
-            <a href="https://www.facebook.com/CollegeOfSciencesPSU/">College of Sciences</a>
+            <a href="mailto:{{ college_info.email }}">{{ college_info.email }}</a><br>
+            <a href="{{ college_info.social }}" target="_blank">{{ college_info.name|default:"College of Sciences" }}</a>
         </div>
         
         <div class="footer">

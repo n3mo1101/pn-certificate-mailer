@@ -92,9 +92,9 @@ DATABASES = {
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
+    # {
+    #     "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    # },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
@@ -169,3 +169,28 @@ LOGOUT_REDIRECT_URL = 'login'
 CERTIFICATE_TESTING_MODE = False
 CERTIFICATE_TEST_EMAIL_NAME = "testuser"
 CERTIFICATE_TEST_EMAIL_DOMAIN = "gmail.com"
+
+# College Details
+COLLEGES = {
+    'CS': {
+        'name': 'College of Sciences',
+        'logo': 'https://github.com/n3mo1101/misc-assets/blob/main/logo/college_logo.png?raw=true',
+        'email': 'cs@psu.palawan.edu.ph',
+        'social': 'https://www.facebook.com/CollegeOfSciencesPSU/'
+    },
+    'CBA': {
+        'name': 'College of Business and Accountancy',
+        'logo': 'https://github.com/n3mo1101/misc-assets/blob/main/logo/cba_logo.png?raw=true',
+        'email': 'cba@psu.palawan.edu.ph',
+        'social': 'https://www.facebook.com/cba.tycoons'
+    },
+    'CAH': {
+        'name': 'College of Arts and Humanities',
+        'logo': 'https://github.com/n3mo1101/misc-assets/blob/main/logo/cah_logo.png?raw=true',
+        'email': 'cah@psu.palawan.edu.ph',
+        'social': 'https://www.facebook.com/CAHpamilya'
+    }
+}
+
+# Generate choices for model fields
+COLLEGE_CHOICES = [(code, info['name']) for code, info in COLLEGES.items()]

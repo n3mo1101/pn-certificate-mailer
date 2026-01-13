@@ -1,22 +1,73 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.conf import settings
+from django.core.exceptions import ValidationError
+
+
+# User Profile to store college information
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    college = models.CharField(
+        max_length=10,
+        choices=settings.COLLEGE_CHOICES,
+        help_text="College this user belongs to"
+    )
+    
+    class Meta:
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.get_college_display()}"
+
+
+# Signal to auto-create UserProfile when User is created
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        # Only create profile if user is not superuser
+        # Superusers don't need college assignment
+        if not instance.is_superuser:
+            UserProfile.objects.get_or_create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
 
 
 # Email templates for certificate distribution
 class EmailTemplate(models.Model):
-    name = models.CharField(max_length=200, unique=True)
+    name = models.CharField(max_length=200)
     subject = models.CharField(max_length=300)
     header_message = models.CharField(max_length=200)
     body_content = models.TextField(help_text="Main email body content")
+    college = models.CharField(
+        max_length=10,
+        choices=settings.COLLEGE_CHOICES,
+        help_text="College this template belongs to"
+    )
     is_predefined = models.BooleanField(default=False, help_text="Predefined templates cannot be edited")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-is_predefined', 'name']
+        unique_together = [['name', 'college']] # Ensure unique combination of name and college (same name allowed for different colleges)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.college})"
+    
+    def clean(self):
+        # Validate that college code exists in settings
+        if self.college not in settings.COLLEGES:
+            raise ValidationError({
+                'college': f"Invalid college code. Must be one of: {', '.join(settings.COLLEGES.keys())}"
+            })
 
 
 # Singleton model for email configuration

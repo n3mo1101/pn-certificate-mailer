@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,8 +19,8 @@ def send_certificates_view(request):
     testing_mode = getattr(settings, 'CERTIFICATE_TESTING_MODE', False)
     
     if request.method == 'POST':
-        # Get the uploaded files using getlist()
-        form = SendCertificatesForm(request.POST, request.FILES)
+        # Pass user to form for college filtering
+        form = SendCertificatesForm(request.POST, request.FILES, user=request.user)
         certificate_files = request.FILES.getlist('certificates')
         
         if not certificate_files:
@@ -55,9 +55,18 @@ def send_certificates_view(request):
             # If no valid files after validation, stop here
             if not valid_files:
                 messages.error(request, "No valid certificate files to process.")
+                # Get user's college for filtering logs
+                if request.user.is_superuser:
+                    recent_logs = EmailLog.objects.select_related('template_used').all()[:20]
+                elif hasattr(request.user, 'profile') and request.user.profile:
+                    recent_logs = EmailLog.objects.select_related('template_used').filter(
+                        template_used__college=request.user.profile.college)[:20]
+                else:
+                    recent_logs = EmailLog.objects.none()[:20]
+                
                 return render(request, 'send_certificates.html', {
                     'form': form,
-                    'recent_logs': EmailLog.objects.select_related('template_used').all()[:20],
+                    'recent_logs': recent_logs,
                     'testing_mode': testing_mode,
                 })
         
@@ -127,12 +136,22 @@ def send_certificates_view(request):
             
             return redirect('send_certificates')
     else:
-        form = SendCertificatesForm()
+        # Pass user to form for college filtering
+        form = SendCertificatesForm(user=request.user)
     
     # Get recent logs for display (last 20)
+    # Filter by college for non-superusers
+    if request.user.is_superuser:
+        recent_logs = EmailLog.objects.select_related('template_used').all()[:20]
+    elif hasattr(request.user, 'profile') and request.user.profile:
+        recent_logs = EmailLog.objects.select_related('template_used').filter(
+            template_used__college=request.user.profile.college)[:20]
+    else:
+        recent_logs = EmailLog.objects.none()[:20]
+        
     context = {
         'form': form,
-        'recent_logs': EmailLog.objects.select_related('template_used').all()[:20],
+        'recent_logs': recent_logs,
         'testing_mode': testing_mode,
     }
     return render(request, 'send_certificates.html', context)
@@ -159,6 +178,17 @@ class TemplateListView(LoginRequiredMixin, ListView):
     model = EmailTemplate
     template_name = 'templates_list.html'
     context_object_name = 'templates'
+    
+    def get_queryset(self):
+        # Filter templates by user's college (unless superuser)
+        qs = super().get_queryset()
+        if not self.request.user.is_superuser:
+            if hasattr(self.request.user, 'profile'):
+                return qs.filter(college=self.request.user.profile.college)
+            else:
+                # User has no profile, return empty queryset
+                return qs.none()
+        return qs
 
 
 # Create a new email template
@@ -173,7 +203,18 @@ class TemplateCreateView(LoginRequiredMixin, CreateView):
         context['action'] = 'Create'
         return context
     
+    def get_form_kwargs(self):
+        # Pass the user to the form
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
     def form_valid(self, form):
+        # Auto-set college for non-superusers
+        if not self.request.user.is_superuser:
+            if hasattr(self.request.user, 'profile'):
+                form.instance.college = self.request.user.profile.college
+        
         messages.success(self.request, f"Template '{form.instance.name}' created successfully!")
         return super().form_valid(form)
 
@@ -191,7 +232,22 @@ class TemplateUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def get_queryset(self):
-        return EmailTemplate.objects.filter(is_predefined=False)
+        # Only allow editing non-predefined templates
+        qs = EmailTemplate.objects.filter(is_predefined=False)
+        
+        # Filter by college for non-superusers
+        if not self.request.user.is_superuser:
+            if hasattr(self.request.user, 'profile'):
+                return qs.filter(college=self.request.user.profile.college)
+            else:
+                return qs.none()
+        return qs
+    
+    def get_form_kwargs(self):
+        # Pass the user to the form
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
     
     def form_valid(self, form):
         messages.success(self.request, f"Template '{form.instance.name}' updated successfully!")
@@ -204,6 +260,16 @@ class TemplateDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'template_confirm_delete.html'
     success_url = reverse_lazy('templates_list')
     
+    def get_queryset(self):
+        # Filter by college for non-superusers
+        qs = super().get_queryset()
+        if not self.request.user.is_superuser:
+            if hasattr(self.request.user, 'profile'):
+                return qs.filter(college=self.request.user.profile.college)
+            else:
+                return qs.none()
+        return qs
+    
     def delete(self, request, *args, **kwargs):
         template_name = self.get_object().name
         messages.success(request, f"Template '{template_name}' deleted successfully!")
@@ -213,12 +279,26 @@ class TemplateDeleteView(LoginRequiredMixin, DeleteView):
 @login_required
 def preview_template(request, pk):
     # Preview an email template
-    template = EmailTemplate.objects.get(id=pk)
+    template = get_object_or_404(EmailTemplate, id=pk)
     
-     # Render the email template with sample data
+    # Check if user has access to this template
+    if not request.user.is_superuser:
+        if hasattr(request.user, 'profile'):
+            if template.college != request.user.profile.college:
+                messages.error(request, "You don't have permission to view this template.")
+                return redirect('templates_list')
+        else:
+            messages.error(request, "You don't have permission to view this template.")
+            return redirect('templates_list')
+    
+    # Get college information
+    college_info = settings.COLLEGES.get(template.college, {})
+    
+    # Render the email template with sample data
     email_html = render_to_string('email_template.html', {
         'header_message': template.header_message,
         'body_content': template.body_content,
+        'college_info': college_info,
         'for_preview': True,
     })
     

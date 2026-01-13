@@ -16,11 +16,7 @@
             <div class="template-card">
                 <div class="template-header">
                     <h3>{{ template.name }}</h3>
-                    {% if template.is_predefined %}
-                        <span class="badge badge-info">Predefined</span>
-                    {% else %}
-                        <span class="badge badge-custom">Custom</span>
-                    {% endif %}
+                    <span class="badge badge-custom">{{ template.college }}</span>
                 </div>
                 <div class="template-body">
                     <p><strong>Subject:</strong> {{ template.subject }}</p>
