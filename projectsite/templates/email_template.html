@@ -78,12 +78,7 @@
 <body>
     <div class="email-container">
         <div class="logo-section">
-            {% if for_preview %}
-                {% load static %}
-                <img src="{{ college_info.logo }}" alt="{{ college_info.name }} Logo">
-            {% else %}
-                <img src="{{ college_info.logo }}" alt="{{ college_info.name }} Logo">
-            {% endif %}
+            <img src="{{ college_info.logo }}" alt="{{ college_info.name }} Logo">
         </div>
         
         <div class="header-message">

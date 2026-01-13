@@ -60,7 +60,7 @@ class EmailTemplate(models.Model):
         unique_together = [['name', 'college']] # Ensure unique combination of name and college (same name allowed for different colleges)
 
     def __str__(self):
-        return f"{self.name} ({self.get_college_display()})"
+        return f"{self.name} ({self.college})"
     
     def clean(self):
         # Validate that college code exists in settings
