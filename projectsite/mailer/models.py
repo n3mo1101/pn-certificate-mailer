@@ -42,7 +42,7 @@ def save_user_profile(sender, instance, **kwargs):
 
 # Email templates for certificate distribution
 class EmailTemplate(models.Model):
-    name = models.CharField(max_length=200, unique=True)
+    name = models.CharField(max_length=200)
     subject = models.CharField(max_length=300)
     header_message = models.CharField(max_length=200)
     body_content = models.TextField(help_text="Main email body content")
@@ -57,6 +57,7 @@ class EmailTemplate(models.Model):
 
     class Meta:
         ordering = ['-is_predefined', 'name']
+        unique_together = [['name', 'college']] # Ensure unique combination of name and college (same name allowed for different colleges)
 
     def __str__(self):
         return f"{self.name} ({self.get_college_display()})"
