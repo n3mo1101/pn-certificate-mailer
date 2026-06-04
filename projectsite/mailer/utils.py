@@ -211,11 +211,13 @@ def send_certificates_batch(certificate_files, template, batch_obj=None):
                 batch_obj.failed_sends = results['failed']
                 batch_obj.save()
             
-            # COOLDOWN: Every 80 emails, pause for 100 seconds to avoid rate limiting
-            if index % 80 == 0 and index < len(certificate_files):
-                print(f"[INFO] Cooldown after {index} emails - waiting 100 seconds to avoid rate limits...")
+            # COOLDOWN: Pause periodically to avoid rate limiting
+            cooldown_interval = getattr(settings, 'BATCH_COOLDOWN_INTERVAL', 80)
+            cooldown_seconds = getattr(settings, 'BATCH_COOLDOWN_SECONDS', 30)
+            if index % cooldown_interval == 0 and index < len(certificate_files):
+                print(f"[INFO] Cooldown after {index} emails - waiting {cooldown_seconds} seconds to avoid rate limits...")
                 connection.close()  # Close connection during cooldown
-                time.sleep(100)
+                time.sleep(cooldown_seconds)
                 connection.open()  # Reopen after cooldown
                 print(f"[INFO] Resuming after cooldown...")
         

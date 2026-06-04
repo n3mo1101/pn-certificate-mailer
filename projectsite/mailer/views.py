@@ -54,6 +54,14 @@ def send_certificates_view(request):
                 
                 valid_files.append(file)
             
+            # Check batch size limit
+            max_batch = getattr(settings, 'MAX_CERTIFICATES_PER_BATCH', 100)
+            if len(valid_files) > max_batch:
+                validation_errors.append(
+                    f"Maximum of {max_batch} certificates per batch. "
+                    f"You uploaded {len(valid_files)}."
+                )
+            
             # Display validation errors if any
             if validation_errors:
                 error_message = "<strong>File Validation Errors:</strong><br>"
@@ -163,6 +171,7 @@ def send_certificates_view(request):
         'form': form,
         'recent_logs': recent_logs,
         'testing_mode': testing_mode,
+        'MAX_CERTIFICATES_PER_BATCH': settings.MAX_CERTIFICATES_PER_BATCH,
     }
     return render(request, 'send_certificates.html', context)
 

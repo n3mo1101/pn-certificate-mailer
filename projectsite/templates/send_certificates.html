@@ -30,12 +30,11 @@
             
             <div class="form-group">
                 <label for="id_certificates">Upload Certificate Files *</label>
-                <input type="file" name="certificates" multiple accept=".pdf" class="form-control" id="id_certificates" required>
+                <input type="file" name="certificates" multiple accept=".pdf" class="form-control" id="id_certificates" required data-max-batch="{{ MAX_CERTIFICATES_PER_BATCH }}">
                 <small class="form-text">Select one or more PDF certificates</small>
                 <small class="form-text alert alert-info">
                     <strong>Filename format:</strong> 2000-1-0001.pdf or 200010001.pdf<br>
-                    <strong>File size:</strong> Maximum of 10MB per file<br>
-                    <small>Note: For large batches (50+ certificates), the process may take several minutes</small>
+                    <small><i>Note: For large batches, the process may take several minutes</i></small>
                 </small>
             </div>
             
@@ -52,15 +51,14 @@
 <div id="progressModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>Sending Certificates...</h3>
+            <h3>Sending...</h3>
         </div>
         <div class="modal-body">
             <div class="progress-spinner"></div>
             <div id="progressText" class="progress-text">Preparing to send...</div>
-            <div class="progress-bar-container">
-                <div id="progressBar" class="progress-bar"></div>
-            </div>
+
             <div id="progressStats" class="progress-stats"></div>
+            <div id="progressEstimate" class="progress-estimate"></div>
         </div>
     </div>
 </div>
@@ -181,14 +179,25 @@
         color: var(--dark-gray);
         line-height: 1.6;
     }
+    .progress-estimate {
+        font-size: 0.9rem;
+        color: var(--dark-gray);
+        font-style: italic;
+    }
+
 </style>
 
 <script>
     document.getElementById('id_certificates').addEventListener('change', function(e) {
+        const maxBatch = parseInt(this.dataset.maxBatch) || 80;
         const fileCount = e.target.files.length;
         const countDiv = document.getElementById('fileCount');
-        if (fileCount > 0) {
-            countDiv.innerHTML = `<strong>✓ ${fileCount} file(s) selected</strong>`;
+
+        if (fileCount > maxBatch) {
+            countDiv.innerHTML = `<strong style="color: var(--error);">✗ Maximum of ${maxBatch} files allowed (you selected ${fileCount}).</strong>`;
+            this.value = '';
+        } else if (fileCount > 0) {
+            countDiv.innerHTML = `<strong>✓ ${fileCount} file(s) selected (max ${maxBatch})</strong>`;
             countDiv.style.color = '#4caf50';
         } else {
             countDiv.innerHTML = '';
@@ -196,12 +205,37 @@
     });
     
     document.getElementById('certificateForm').addEventListener('submit', function(e) {
-        const fileCount = document.getElementById('id_certificates').files.length;
-        
+        const fileInput = document.getElementById('id_certificates');
+        const fileCount = fileInput.files.length;
+        const maxBatch = parseInt(fileInput.dataset.maxBatch) || 80;
+
+        if (fileCount > maxBatch) {
+            e.preventDefault();
+            return;
+        }
+
         if (fileCount > 0 && confirm(`Are you sure you want to send ${fileCount} certificate(s)?`)) {
             document.getElementById('progressModal').style.display = 'flex';
             document.getElementById('progressText').textContent = `Sending ${fileCount} certificates...`;
             document.getElementById('sendBtn').disabled = true;
+            
+            // Estimate time
+            const cooldownInterval = 80;
+            const cooldownSeconds = 30;
+            const secondsPerEmail = 2;
+            const estimatedSeconds = Math.ceil(fileCount / cooldownInterval) * cooldownSeconds + fileCount * secondsPerEmail;
+            
+            let estimateText;
+            if (estimatedSeconds < 60) {
+                estimateText = 'Estimated time: Less than a minute';
+            } else {
+                const minutes = Math.ceil(estimatedSeconds / 60);
+                estimateText = `Estimated time: About ${minutes} minute${minutes > 1 ? 's' : ''}`;
+            }
+            
+            document.getElementById('progressStats').innerHTML =
+                `<span style="font-size: 0.85rem;">Please wait, this may take a moment</span>`;
+            document.getElementById('progressEstimate').textContent = estimateText;
         } else {
             e.preventDefault();
         }
