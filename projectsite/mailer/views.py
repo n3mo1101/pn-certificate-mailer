@@ -30,16 +30,26 @@ def send_certificates_view(request):
             validation_errors = []
             valid_files = []
             
+            max_file_size = getattr(settings, 'DATA_UPLOAD_MAX_MEMORY_SIZE', 10485760)
+
             for file in certificate_files:
                 if not file.name.lower().endswith('.pdf'):
                     validation_errors.append(f"'{file.name}' is not a PDF file.")
                     continue
+
+                if file.size > max_file_size:
+                    size_mb = file.size / (1024 * 1024)
+                    limit_mb = max_file_size / (1024 * 1024)
+                    validation_errors.append(
+                        f"'{file.name}' exceeds the {limit_mb:.0f}MB limit ({size_mb:.1f}MB)."
+                    )
+                    continue
                 
                 if not testing_mode:
-                    # DEFAULT MODE: Check filename format (####-#-####.pdf)
+                    # DEFAULT MODE: Check filename format (####-#-####.pdf or ########.pdf)
                     is_valid, _, _ = validate_certificate_filename(file.name)
                     if not is_valid:
-                        validation_errors.append(f"'{file.name}' has invalid format. Expected: ####-#-####.pdf")
+                        validation_errors.append(f"'{file.name}' has invalid format. Expected: ####-#-####.pdf or ########.pdf")
                         continue
                 
                 valid_files.append(file)

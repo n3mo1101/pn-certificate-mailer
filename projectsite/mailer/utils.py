@@ -53,26 +53,29 @@ def validate_certificate_filename(filename):
         return False, None, None
     
     student_id = extract_student_id_from_filename(filename)
-    # NOTE: Commented out validation code for filenames below.
+    testing_mode = getattr(settings, 'CERTIFICATE_TESTING_MODE', False)
 
-    # testing_mode = getattr(settings, 'CERTIFICATE_TESTING_MODE', False)
-    # if testing_mode:
-    #     email = generate_email_from_student_id(student_id)
-    #     return True, student_id, email
-    
-    # # DEFAULT MODE: Validate ####-#-#### format
-    # parts = student_id.split('-')
-    # if len(parts) != 3:
-    #     return False, None, None
-    
-    # # Check if all parts are numeric
-    # try:
-    #     for part in parts:
-    #         int(part)
-    # except ValueError:
-    #     return False, None, None
-    
-     # Generate email
+    if testing_mode:
+        # TESTING MODE: Accept any PDF filename
+        email = generate_email_from_student_id(student_id)
+        return True, student_id, email
+
+    # DEFAULT MODE: Validate ####-#-#### or ######## format
+    if '-' in student_id:
+        # Hyphenated format: ####-#-####
+        parts = student_id.split('-')
+        if len(parts) != 3:
+            return False, None, None
+        try:
+            for part in parts:
+                int(part)
+        except ValueError:
+            return False, None, None
+    else:
+        # Plain numeric format: ########
+        if not student_id.isdigit():
+            return False, None, None
+
     email = generate_email_from_student_id(student_id)
     return True, student_id, email
 
