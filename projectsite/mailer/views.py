@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -157,19 +158,52 @@ def send_certificates_view(request):
         # Pass user to form for college filtering
         form = SendCertificatesForm(user=request.user)
     
-    # Get recent logs for display (last 20)
-    # Filter by college for non-superusers
+    # Paginated logs (filtered by college for non-superusers)
+    logs_qs = EmailLog.objects.select_related('template_used')
     if request.user.is_superuser:
-        recent_logs = EmailLog.objects.select_related('template_used').all()[:20]
+        logs_qs = logs_qs.all()
     elif hasattr(request.user, 'profile') and request.user.profile:
-        recent_logs = EmailLog.objects.select_related('template_used').filter(
-            template_used__college=request.user.profile.college)[:20]
+        logs_qs = logs_qs.filter(
+            template_used__college=request.user.profile.college)
     else:
-        recent_logs = EmailLog.objects.none()[:20]
-        
+        logs_qs = logs_qs.none()
+    logs_qs = logs_qs.order_by('-sent_at')
+
+    paginator = Paginator(logs_qs, 20)
+    page = request.GET.get('page', 1)
+    try:
+        page_obj = paginator.page(page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    # Build elided page range
+    num_pages = paginator.num_pages
+    current = page_obj.number
+    page_range = []
+    if num_pages <= 7:
+        page_range = list(range(1, num_pages + 1))
+    else:
+        page_range.append(1)
+        if current > 3:
+            page_range.append('...')
+        left = max(2, current - 1)
+        right = min(num_pages - 1, current + 1)
+        if current <= 3:
+            right = min(4, num_pages - 1)
+        if current >= num_pages - 2:
+            left = max(num_pages - 3, 2)
+        for p in range(left, right + 1):
+            page_range.append(p)
+        if current < num_pages - 2:
+            page_range.append('...')
+        page_range.append(num_pages)
+
     context = {
         'form': form,
-        'recent_logs': recent_logs,
+        'page_obj': page_obj,
+        'page_range': page_range,
         'testing_mode': testing_mode,
         'MAX_CERTIFICATES_PER_BATCH': settings.MAX_CERTIFICATES_PER_BATCH,
     }

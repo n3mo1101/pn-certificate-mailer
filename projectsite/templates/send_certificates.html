@@ -2,6 +2,11 @@
 
 {% block title %}Send Certificates{% endblock %}
 
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/send_certificates.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="card">
     <div class="card-header">
@@ -63,11 +68,11 @@
     </div>
 </div>
 
-{% if recent_logs %}
+{% if page_obj.object_list %}
 <div class="card" style="margin-top: 2rem;">
     <div class="card-header">
-        <h3>Recent Email Logs</h3>
-        <p>Last 20 certificate deliveries</p>
+        <h3>Recent Logs</h3>
+        <p>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
     </div>
     <div class="card-body">
         <table class="log-table">
@@ -82,7 +87,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for log in recent_logs %}
+                {% for log in page_obj %}
                 <tr>
                     <td>{{ log.student_id }}</td>
                     <td>{{ log.email }}</td>
@@ -102,90 +107,35 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="page-link">&laquo; Previous</a>
+            {% else %}
+                <span class="page-link disabled">&laquo; Previous</span>
+            {% endif %}
+
+            {% for p in page_range %}
+                {% if p == '...' %}
+                    <span class="page-link dots">...</span>
+                {% elif p == page_obj.number %}
+                    <span class="page-link active">{{ p }}</span>
+                {% else %}
+                    <a href="?page={{ p }}" class="page-link">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="page-link">Next &raquo;</a>
+            {% else %}
+                <span class="page-link disabled">Next &raquo;</span>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endif %}
-
-<style>
-    .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .modal-content {
-        background: var(--white);
-        border-radius: 15px;
-        max-width: 500px;
-        width: 90%;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    }
-    .modal-header {
-        background: linear-gradient(135deg, var(--lighter-green), var(--accent-green));
-        color: var(--white);
-        padding: 1.5rem 2rem;
-        border-radius: 15px 15px 0 0;
-    }
-    .modal-header h3 {
-        margin: 0;
-        font-size: 1.5rem;
-    }
-    .modal-body {
-        padding: 2rem;
-        text-align: center;
-    }
-    .progress-spinner {
-        border: 4px solid var(--gray);
-        border-top: 4px solid var(--light-green);
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 1.5rem;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    .progress-text {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--primary-green);
-        margin-bottom: 1rem;
-    }
-    .progress-bar-container {
-        width: 100%;
-        height: 30px;
-        background-color: var(--light-gray);
-        border-radius: 15px;
-        overflow: hidden;
-        margin-bottom: 1rem;
-    }
-    .progress-bar {
-        height: 100%;
-        background: linear-gradient(135deg, var(--light-green), var(--accent-green));
-        width: 0%;
-        transition: width 0.3s ease;
-        border-radius: 15px;
-    }
-    .progress-stats {
-        font-size: 0.95rem;
-        color: var(--dark-gray);
-        line-height: 1.6;
-    }
-    .progress-estimate {
-        font-size: 0.9rem;
-        color: var(--dark-gray);
-        font-style: italic;
-    }
-
-</style>
 
 <script>
     document.getElementById('id_certificates').addEventListener('change', function(e) {
@@ -196,9 +146,6 @@
         if (fileCount > maxBatch) {
             countDiv.innerHTML = `<strong style="color: var(--error);">✗ Maximum of ${maxBatch} files allowed (you selected ${fileCount}).</strong>`;
             this.value = '';
-        } else if (fileCount > 0) {
-            countDiv.innerHTML = `<strong>✓ ${fileCount} file(s) selected (max ${maxBatch})</strong>`;
-            countDiv.style.color = '#4caf50';
         } else {
             countDiv.innerHTML = '';
         }
